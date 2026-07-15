@@ -15,7 +15,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   late final SafeBrowsingService safeBrowsingService;
 
   bool _isProcessing = false;
-  ScanResult? _lastResult; // null tant qu'on n'a rien scanné (état "idle")
+  ScanResult? _lastResult; // null while nothing has been scanned yet ("idle" state)
 
   @override
   void initState() {
@@ -40,12 +40,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     setState(() {
       _isProcessing = true;
-      _lastResult = null; // état "loading" : pas encore de résultat
+      _lastResult = null; // "loading" state: no result yet
     });
 
     final result = await safeBrowsingService.checkUrl(value);
 
-    if (!mounted) return; // garde vue plus tôt : le widget a pu être détruit pendant l'await
+    if (!mounted) return; // guard against setState after the widget was disposed mid-await
 
     setState(() {
       _lastResult = result;
@@ -66,6 +66,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body: Stack(
         children: [
           MobileScanner(controller: controller, onDetect: _onDetect),
+          if (!_isProcessing && _lastResult == null)
+            const Positioned(
+              top: 40,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  'Point the camera at a QR code',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    backgroundColor: Colors.black54,
+                  ),
+                ),
+              ),
+            ),
           if (_isProcessing && _lastResult == null)
             const Center(child: CircularProgressIndicator()),
           if (_lastResult != null) _buildResultCard(_lastResult!),
@@ -80,8 +96,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     final color = isError ? Colors.grey : (isSafe ? Colors.green : Colors.red);
     final label = isError
-        ? 'Erreur : ${result.errorMessage}'
-        : (isSafe ? 'URL sûre' : 'Menace : ${result.threatType}');
+        ? 'Error: ${result.errorMessage}'
+        : (isSafe ? 'URL is safe' : 'Threat detected: ${result.threatType}');
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -106,7 +122,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             const SizedBox(height: 8),
             ElevatedButton(
               onPressed: _scanAgain,
-              child: const Text('Scanner à nouveau'),
+              child: const Text('Scan again'),
             ),
           ],
         ),

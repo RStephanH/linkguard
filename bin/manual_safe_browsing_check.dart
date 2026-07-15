@@ -1,18 +1,17 @@
 import 'package:linkguard/services/safe_browsing_service.dart';
 
 void main() async {
-  // Values from fromEnvironment MUST be const
   const apiKey = String.fromEnvironment('SAFE_BROWSING_API_KEY');
 
   if (apiKey.isEmpty) {
-    print('Error: Please provide your API key using:');
-    print('dart run --define=SAFE_BROWSING_API_KEY=your_key bin/manual_safe_browsing_check.dart');
+    print('Error: pass your key with --dart-define=SAFE_BROWSING_API_KEY=your_key '
+        '(use -DSAFE_BROWSING_API_KEY=your_key if running via `dart run`)');
     return;
   }
 
   final service = SafeBrowsingService(apiKey: apiKey);
 
-  // Official Google test URL — supposed to always be detected as malware
+  // Google's official test URL — always flagged as malicious, safe to use for testing
   const testUrl = 'https://testsafebrowsing.appspot.com/s/malware.html';
 
   final result = await service.checkUrl(testUrl);
