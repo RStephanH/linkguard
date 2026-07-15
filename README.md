@@ -32,7 +32,7 @@ Safe Browsing v5alpha1 (`urls:search`) was evaluated first but **only returns pr
 
 ## Known limitation
 
-Google Safe Browsing alone only covers threats already listed in its databases — a very recent phishing URL may not be detected yet. A future version could aggregate multiple sources (e.g. VirusTotal) for a stronger consensus score.
+Google Safe Browsing alone only covers threats already listed in its databases — a very recent phishing URL may not be detected yet. See the roadmap below for planned mitigations.
 
 ## Running the project
 
@@ -58,3 +58,17 @@ dart run bin/manual_safe_browsing_check.dart -DSAFE_BROWSING_API_KEY=your_api_ke
 ```
 
 Runs a single real call against Google's official test malware URL, useful for confirming the live API integration before a demo.
+
+## Roadmap
+
+Planned improvements beyond the current academic demo scope, roughly in priority order:
+
+1. **Open in browser for safe URLs** — add an "Open link" action shown only when `ThreatLevel.safe`, using [`url_launcher`](https://pub.dev/packages/url_launcher). Never shown for `unsafe` or `error` results — an error means "unverified", not "safe".
+
+2. **VirusTotal integration** — add as a second inspection source, aggregating verdicts from dozens of antivirus engines for a consensus score rather than a single yes/no. Free tier is rate-limited (4 req/min, 500/day, non-commercial use), so this becomes an opt-in "deeper scan" step rather than the default check.
+
+3. **Re-attempt Safe Browsing v5** — re-evaluate whether `hashes.search` (the privacy-preserving, hash-based v5 endpoint) has a usable JSON path, or implement protobuf decoding via generated Dart code from Google's official `.proto` definitions if not.
+
+4. **urlscan.io integration (deepest inspection tier)** — unlike Safe Browsing/VirusTotal (static blocklist lookups), urlscan.io actually renders the page in a sandbox and reports real behavior (screenshots, requests made, resources loaded) — genuinely complementary rather than redundant. Scans are public by default on the free tier, so the UI will need to warn the user explicitly before running this tier ("this scan will be publicly visible").
+
+The long-term goal is a single "inspection level" selector — quick (Safe Browsing only) → deep (+ VirusTotal) → sandboxed (+ urlscan.io) — letting the user trade off speed/privacy against thoroughness.
